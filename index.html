@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awareness Challenge Arena Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .neon-glow { text-shadow: 0 0 15px rgba(139,92,246,0.8), 0 0 30px rgba(139,92,246,0.4); }
+        .timer-glow { text-shadow: 0 0 12px rgba(239,68,68,0.7); }
+        .game-card-pulse { animation: cardPulse 3s infinite ease-in-out; }
+        @keyframes cardPulse { 0%,100%{border-color:rgba(99,102,241,0.2);} 50%{border-color:rgba(99,102,241,0.8);} }
+
+        @keyframes ambientLightShift { 0%{background-position:0% 0%;} 50%{background-position:100% 100%;} 100%{background-position:0% 0%;} }
+        .dynamic-bg-lights {
+            background: radial-gradient(circle at 30% 20%,rgba(99,102,241,0.15) 0%,transparent 40%),
+                        radial-gradient(circle at 80% 70%,rgba(244,63,94,0.12) 0%,transparent 45%),
+                        radial-gradient(circle at 50% 50%,rgba(16,185,129,0.08) 0%,transparent 50%),
+                        #020617;
+            background-size:200% 200%;
+            animation:ambientLightShift 12s infinite ease-in-out;
+        }
+
+        @keyframes bounceSpeak { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
+        .character-talking { animation:bounceSpeak 0.3s infinite ease-in-out; }
+        @keyframes cheerWave { 0%,100%{transform:scale(1) rotate(0deg);} 50%{transform:scale(1.08) rotate(3deg);} }
+        .character-cheering { animation:cheerWave 0.2s infinite ease-in-out; }
+        @keyframes dizzyShudder { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+        .character-dizzy { animation:dizzyShudder 0.1s infinite ease-in-out; }
+
+        .ping-ring { animation:pingRing 1.6s infinite ease-out; }
+        @keyframes pingRing { 0%{transform:scale(0.5);opacity:1;} 100%{transform:scale(1.6);opacity:0;} }
+
+        .click-ripple-circle {
+            position:fixed; pointer-events:none; border:3px solid currentColor;
+            border-radius:50%; width:10px; height:10px;
+            transform:translate(-50%,-50%);
+            animation:circleBurstOut 0.5s cubic-bezier(0.1,0.8,0.3,1) forwards; z-index:9999;
+        }
+        @keyframes circleBurstOut { 0%{width:10px;height:10px;opacity:1;filter:blur(0);} 100%{width:80px;height:80px;opacity:0;filter:blur(2px);} }
+
+        /* Confetti particle */
+        .confetti-piece {
+            position:fixed; pointer-events:none; border-radius:2px;
+            animation:confettiFall linear forwards;
+            z-index:9998;
+        }
+        @keyframes confettiFall {
+            0%{transform:translateY(-20px) rotate(0deg);opacity:1;}
+            100%{transform:translateY(100vh) rotate(720deg);opacity:0;}
+        }
+
+        /* Star burst on success */
+        .star-burst {
+            position:fixed; pointer-events:none; font-size:1.5rem;
+            animation:starPop 0.8s ease-out forwards; z-index:9998;
+        }
+        @keyframes starPop {
+            0%{transform:scale(0) translate(-50%,-50%);opacity:1;}
+            60%{transform:scale(1.4) translate(-50%,-50%);opacity:1;}
+            100%{transform:scale(0.8) translate(-50%,-50%) translateY(-40px);opacity:0;}
+        }
+
+        /* Shake on fail */
+        @keyframes shakeX { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-10px);} 40%{transform:translateX(10px);} 60%{transform:translateX(-8px);} 80%{transform:translateX(8px);} }
+        .shake-anim { animation:shakeX 0.4s ease-in-out; }
+
+        /* Slide in up */
+        @keyframes slideInUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+        .slide-in-up { animation:slideInUp 0.4s ease-out; }
+
+        /* Scale in */
+        @keyframes scaleIn { from{transform:scale(0.85);opacity:0;} to{transform:scale(1);opacity:1;} }
+        .animate-scaleIn { animation:scaleIn 0.3s ease-out; }
+
+        /* Glow pulse on active topic tab */
+        @keyframes tabGlow { 0%,100%{box-shadow:0 0 8px 0 rgba(99,102,241,0.4);} 50%{box-shadow:0 0 20px 6px rgba(99,102,241,0.7);} }
+        .tab-active-glow { animation:tabGlow 2s infinite ease-in-out; }
+
+        /* LED frame */
+        .led-glow-frame {
+            position:relative; padding:16px; background:#020617;
+            border-radius:24px; overflow:hidden;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 0 30px rgba(0,245,255,0.2);
+        }
+        .led-glow-frame::before {
+            content:''; position:absolute; width:160%; height:160%;
+            background:conic-gradient(#00f5ff,#ff007f,#39ff14,#fffb00,#9d00ff,#00f5ff);
+            animation:rotateLEDBorder 4s linear infinite; z-index:1;
+        }
+        .led-glow-frame::after {
+            content:''; position:absolute; inset:6px;
+            background:#0f172a; border-radius:18px; z-index:2;
+        }
+        .led-qrcode-container { position:relative; z-index:3; background:white; border-radius:12px; }
+        @keyframes rotateLEDBorder { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+
+        .blueprint-grid {
+            background-size:24px 24px;
+            background-image:linear-gradient(to right,rgba(51,65,85,0.25) 1px,transparent 1px),
+                             linear-gradient(to bottom,rgba(51,65,85,0.25) 1px,transparent 1px);
+        }
+
+        /* Floating particles canvas */
+        #particle-canvas { position:fixed; top:0; left:0; pointer-events:none; z-index:1; }
+
+        /* Progress bar animation */
+        @keyframes progressFill { from{width:0%;} to{width:var(--pct);} }
+        .progress-animate { animation:progressFill 0.6s ease-out forwards; }
+
+        /* Ripple on button press */
+        .btn-ripple { position:relative; overflow:hidden; }
+        .btn-ripple::after {
+            content:''; position:absolute; inset:0; background:rgba(255,255,255,0.15);
+            transform:scale(0); border-radius:50%; transition:transform 0.3s;
+        }
+        .btn-ripple:active::after { transform:scale(3); opacity:0; }
+
+        .scrollbar-none::-webkit-scrollbar { display:none; }
+        .scrollbar-none { -ms-overflow-style:none; scrollbar-width:none; }
+
+        /* Victory shimmer */
+        @keyframes shimmer { 0%{background-position:-200% 0;} 100%{background-position:200% 0;} }
+        .shimmer-text {
+            background:linear-gradient(90deg,#f59e0b,#fcd34d,#f59e0b,#fbbf24);
+            background-size:200% auto;
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            animation:shimmer 2s linear infinite;
+        }
+
+        /* Heartbeat for rhythm task */
+        @keyframes heartbeat { 0%,100%{transform:scale(1);} 14%{transform:scale(1.3);} 28%{transform:scale(1);} 42%{transform:scale(1.15);} 70%{transform:scale(1);} }
+        .heartbeat { animation:heartbeat 0.8s ease-in-out infinite; }
+    </style>
+</head>
+<body class="dynamic-bg-lights text-slate-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white overflow-x-hidden relative" onclick="spawnColorBurstRipple(event)">
+
+<canvas id="particle-canvas"></canvas>
+
+<!-- Language Toggle -->
+<div class="fixed top-4 right-4 z-50">
+    <button onclick="toggleLanguage()" id="lang-toggle"
+            class="bg-slate-800 hover:bg-slate-700 px-5 py-2.5 rounded-2xl text-sm font-bold shadow-xl border border-slate-600 flex items-center gap-2 transition btn-ripple">
+        <i class="fa-solid fa-globe text-indigo-400 text-xs"></i>
+        <span id="current-lang-label">EN</span>
+        <span class="text-[10px] text-slate-500">/ BM</span>
+    </button>
+</div>
+
+<!-- Audio Toggle -->
+<div class="fixed bottom-4 left-4 z-50">
+    <button onclick="toggleBackgroundAudio()" id="audio-toggle-btn"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transition-all border border-indigo-400 transform active:scale-95 btn-ripple">
+        <i id="audio-icon" class="fa-solid fa-volume-xmark text-lg"></i>
+    </button>
+</div>
+
+<!-- ======================== WELCOME SCREEN ======================== -->
+<div id="page-welcome-screen" class="min-h-screen flex flex-col justify-between p-6">
+    <header class="text-center pt-8">
+        <span class="bg-indigo-500/10 text-indigo-400 text-xs font-bold tracking-widest px-4 py-1.5 rounded-full border border-indigo-500/20 uppercase" id="welcome-badge">Interactive Awareness Challenge</span>
+        <h1 id="welcome-title" class="text-4xl md:text-6xl font-black tracking-tighter mt-3 bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-indigo-200 to-emerald-400 neon-glow">THE CHALLENGE HUB</h1>
+    </header>
+
+    <main class="max-w-md w-full mx-auto my-auto flex flex-col items-center bg-slate-900/60 border border-slate-800 rounded-3xl p-8 shadow-2xl backdrop-blur-xl game-card-pulse slide-in-up">
+        <div class="led-glow-frame mb-6 transform hover:scale-105 transition duration-300">
+            <div id="qrcode-target-box" class="led-qrcode-container p-3"></div>
+        </div>
+        <p id="welcome-desc" class="text-slate-400 text-sm text-center font-medium leading-relaxed mb-6">
+            Scan the QR code with your device camera to link your terminal, then enter below.
+        </p>
+        <button onclick="navigateToGameTerminal()" id="enter-btn"
+                class="w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 hover:from-violet-500 hover:to-indigo-600 text-white font-black py-4 px-8 rounded-2xl shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 tracking-wider flex items-center justify-center space-x-3 text-lg btn-ripple">
+            <span id="enter-btn-text">ENTER GAME TERMINAL</span>
+            <i class="fa-solid fa-gamepad text-xl"></i>
+        </button>
+    </main>
+    <footer class="text-center text-xs text-slate-600 pb-4" id="footer-txt">Powered by Web Audio & LED Burst Matrices</footer>
+</div>
+
+<!-- ======================== GAMEPLAY TERMINAL ======================== -->
+<div id="page-gameplay-terminal" class="hidden min-h-screen">
+    <nav class="bg-slate-900/80 border-b border-slate-800 sticky top-0 backdrop-blur-md z-40 px-4 py-3 shadow-md">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+                <span id="nav-title" class="font-black tracking-wider text-xs text-slate-200">SAFETY TERMINAL ONLINE</span>
+            </div>
+            <div class="bg-black border border-red-500/30 px-4 py-1.5 rounded-xl flex items-center space-x-2">
+                <i class="fa-solid fa-stopwatch text-red-500 text-xs animate-pulse"></i>
+                <span class="text-xs font-mono text-slate-400 tracking-wider" id="timer-label">TIMER:</span>
+                <span id="global-speedrun-clock" class="text-sm font-mono font-black text-red-500 tracking-tight timer-glow">00:00.0</span>
+            </div>
+            <button onclick="navigateToWelcomeScreen()"
+                    class="text-slate-400 hover:text-slate-200 text-xs font-bold tracking-wide border border-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">
+                <i class="fa-solid fa-arrow-left mr-1.5"></i><span id="disconnect-text">DISCONNECT</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-xl mx-auto p-4 pb-16">
+
+        <!-- Topic Tabs — ALL UNLOCKED, FREE CHOICE -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 slide-in-up">
+            <button onclick="switchTopic('recycling')" id="tab-recycling"
+                    class="topic-tab p-4 bg-slate-900 rounded-2xl text-center shadow-lg border border-slate-700 transition hover:scale-105 btn-ripple">
+                <i class="fa-solid fa-recycle text-3xl mb-1 text-emerald-400"></i>
+                <span id="tab1" class="font-extrabold text-xs tracking-wide text-slate-300 block">1. Recycling</span>
+                <span id="tab1-done" class="hidden text-[9px] font-bold text-emerald-400 mt-0.5 block">✓ DONE</span>
+            </button>
+            <button onclick="switchTopic('safety-driving')" id="tab-safety-driving"
+                    class="topic-tab p-4 bg-slate-900 rounded-2xl text-center shadow-lg border border-slate-700 transition hover:scale-105 btn-ripple">
+                <i class="fa-solid fa-car text-3xl mb-1 text-amber-500"></i>
+                <span id="tab2" class="font-extrabold text-xs tracking-wide text-slate-300 block">2. Safe Driving</span>
+                <span id="tab2-done" class="hidden text-[9px] font-bold text-amber-400 mt-0.5 block">✓ DONE</span>
+            </button>
+            <button onclick="switchTopic('slip-trip-fall')" id="tab-slip-trip-fall"
+                    class="topic-tab p-4 bg-slate-900 rounded-2xl text-center shadow-lg border border-slate-700 transition hover:scale-105 btn-ripple">
+                <i class="fa-solid fa-person-falling text-3xl mb-1 text-rose-400"></i>
+                <span id="tab3" class="font-extrabold text-xs tracking-wide text-slate-300 block">3. Slip, Trip, Fall</span>
+                <span id="tab3-done" class="hidden text-[9px] font-bold text-rose-400 mt-0.5 block">✓ DONE</span>
+            </button>
+            <button onclick="switchTopic('heart-health')" id="tab-heart-health"
+                    class="topic-tab p-4 bg-slate-900 rounded-2xl text-center shadow-lg border border-slate-700 transition hover:scale-105 btn-ripple">
+                <i class="fa-solid fa-heart-pulse text-3xl mb-1 text-red-500"></i>
+                <span id="tab4" class="font-extrabold text-xs tracking-wide text-slate-300 block">4. Heart Health</span>
+                <span id="tab4-done" class="hidden text-[9px] font-bold text-red-400 mt-0.5 block">✓ DONE</span>
+            </button>
+        </section>
+
+        <!-- Progress bar across all topics -->
+        <div class="mb-4 bg-slate-900/70 rounded-2xl p-3 border border-slate-800 flex items-center gap-3">
+            <span id="progress-label" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">Overall Progress</span>
+            <div class="flex-1 bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                <div id="overall-progress-bar" class="h-full bg-gradient-to-r from-violet-500 to-emerald-400 rounded-full transition-all duration-700" style="width:0%"></div>
+            </div>
+            <span id="overall-progress-pct" class="text-[10px] font-black text-slate-400 min-w-[28px] text-right">0%</span>
+        </div>
+
+        <!-- Character -->
+        <section onclick="playSoundFX('synth')"
+                 class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 mb-6 flex items-center space-x-4 shadow-xl overflow-hidden relative backdrop-blur-md cursor-pointer hover:border-slate-700 transition slide-in-up">
+            <div id="character-sprite"
+                 class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-400 flex items-center justify-center border-2 border-slate-700 shadow-xl flex-shrink-0 relative transition-all duration-300">
+                <i class="fa-solid fa-cat text-3xl text-slate-950"></i>
+                <div class="absolute -top-1.5 -right-1.5 bg-amber-400 border border-slate-950 rounded-md px-1 py-0.5 text-[8px] font-black text-slate-950 flex items-center shadow">
+                    <i class="fa-solid fa-hard-hat mr-0.5"></i>CHIEF
+                </div>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-2xl relative flex-grow">
+                <div class="absolute top-1/2 -left-2 transform -translate-y-1/2 w-4 h-4 bg-slate-950 border-l border-b border-slate-800 rotate-45"></div>
+                <h5 id="character-name-plate" class="text-xs font-black text-amber-400 tracking-wider uppercase mb-0.5">Safety Whiskers</h5>
+                <p id="character-dialogue-cloud" class="text-xs text-slate-200 font-medium leading-relaxed italic">Welcome! Choose ANY topic freely — no order required. All stations are open for you!</p>
+            </div>
+        </section>
+
+        <!-- Game Area -->
+        <section class="bg-slate-900/90 border border-slate-800 shadow-2xl rounded-3xl p-6 relative slide-in-up">
+            <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-800/80">
+                <h2 id="current-topic-title" class="text-lg font-black tracking-tight text-emerald-400">SELECT A TOPIC ABOVE</h2>
+                <div class="flex space-x-1.5 bg-black/40 px-3 py-1.5 rounded-full border border-slate-800">
+                    <span id="dot-1" class="w-3 h-3 rounded-full bg-slate-700 transition-all duration-300"></span>
+                    <span id="dot-2" class="w-3 h-3 rounded-full bg-slate-700 transition-all duration-300"></span>
+                    <span id="dot-3" class="w-3 h-3 rounded-full bg-slate-700 transition-all duration-300"></span>
+                </div>
+            </div>
+
+            <div id="game-content-area" class="min-h-[300px] flex flex-col justify-center">
+                <div class="text-center text-slate-600 py-16">
+                    <i class="fa-solid fa-hand-pointer text-4xl mb-4 animate-bounce"></i>
+                    <p id="select-topic-hint" class="text-sm font-semibold">Select any topic above to begin!</p>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                <button id="prev-btn" onclick="prevTask()"
+                        class="hidden bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-5 rounded-xl transition text-xs btn-ripple">
+                    <i class="fa-solid fa-arrow-left mr-1"></i><span id="prev-btn-text">Back</span>
+                </button>
+                <div class="flex-grow"></div>
+                <button id="next-btn" onclick="nextTask()"
+                        class="hidden text-slate-950 font-black py-2.5 px-6 rounded-xl transition shadow-lg tracking-wider text-xs btn-ripple">
+                    <span id="next-btn-text">NEXT TASK</span>
+                </button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- ======================== EXPLANATION MODAL ======================== -->
+<div id="explanation-modal" class="hidden fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-50 backdrop-blur-md">
+    <div class="bg-slate-900 border border-rose-500/40 p-6 rounded-3xl max-w-sm w-full text-center shadow-2xl relative animate-scaleIn">
+        <div class="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500 flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-triangle-exclamation text-2xl text-rose-500"></i>
+        </div>
+        <h3 id="modal-title" class="text-lg font-black text-slate-100 tracking-tight uppercase mb-2">Hazard Assessment Warning</h3>
+        <p id="explanation-modal-text" class="text-slate-300 text-xs leading-relaxed mb-6 bg-slate-950 p-4 rounded-xl border border-slate-800 text-left font-medium"></p>
+        <button onclick="closeExplanationModal()"
+                class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl transition text-xs tracking-wider btn-ripple">
+            <span id="modal-ack-btn">ACKNOWLEDGE HAZARD</span>
+        </button>
+    </div>
+</div>
+
+<!-- ======================== TOPIC COMPLETE TOAST ======================== -->
+<div id="topic-complete-toast" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
+    <div class="bg-slate-900 border-2 border-emerald-400 rounded-3xl p-8 text-center shadow-2xl animate-scaleIn min-w-[280px]">
+        <div class="text-5xl mb-3">🏆</div>
+        <h3 id="toast-title" class="text-xl font-black text-emerald-400 mb-1">Topic Complete!</h3>
+        <p id="toast-subtitle" class="text-slate-400 text-sm mb-4">Choose another topic to continue.</p>
+        <button onclick="closeTopicToast()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 px-6 rounded-xl text-sm btn-ripple">
+            <span id="toast-btn-text">KEEP GOING!</span>
+        </button>
+    </div>
+</div>
+
+<script>
+// ==================== LANGUAGE SYSTEM ====================
+let currentLang = 'en';
+
+const T = {
+    en: {
+        welcomeBadge: 'Interactive Awareness Challenge',
+        welcomeTitle: 'THE CHALLENGE HUB',
+        welcomeDesc: 'Scan the QR code with your device camera to link your terminal, then enter below.',
+        enterBtn: 'ENTER GAME TERMINAL',
+        navTitle: 'SAFETY TERMINAL ONLINE',
+        timerLabel: 'TIMER:',
+        disconnect: 'DISCONNECT',
+        tab1: '1. Recycling',
+        tab2: '2. Safe Driving',
+        tab3: '3. Slip, Trip, Fall',
+        tab4: '4. Heart Health',
+        selectHint: 'Select any topic above to begin!',
+        progressLabel: 'Overall Progress',
+        modalTitle: 'Hazard Assessment Warning',
+        modalAck: 'ACKNOWLEDGE HAZARD',
+        prevBtn: 'Back',
+        nextBtn: 'NEXT TASK',
+        verifyBtn: 'FINISH TOPIC',
+        charWelcome: 'Welcome! Choose ANY topic freely — no order required. All stations are open for you!',
+        charName: 'Safety Whiskers',
+        toastTitle: 'Topic Complete!',
+        toastSub: 'Choose another topic to continue.',
+        toastBtn: 'KEEP GOING!',
+        footer: 'Powered by Web Audio & LED Burst Matrices',
+    },
+    ms: {
+        welcomeBadge: 'Cabaran Kesedaran Interaktif',
+        welcomeTitle: 'PUSAT CABARAN',
+        welcomeDesc: 'Imbas kod QR dengan kamera telefon anda untuk menghubungkan terminal, kemudian masuk di bawah.',
+        enterBtn: 'MASUK TERMINAL PERMAINAN',
+        navTitle: 'TERMINAL KESELAMATAN AKTIF',
+        timerLabel: 'MASA:',
+        disconnect: 'PUTUSKAN SAMBUNGAN',
+        tab1: '1. Kitar Semula',
+        tab2: '2. Memandu Selamat',
+        tab3: '3. Tersandung & Jatuh',
+        tab4: '4. Kesihatan Jantung',
+        selectHint: 'Pilih mana-mana topik di atas untuk bermula!',
+        progressLabel: 'Kemajuan Keseluruhan',
+        modalTitle: 'Amaran Penilaian Bahaya',
+        modalAck: 'SAYA FAHAM',
+        prevBtn: 'Kembali',
+        nextBtn: 'TUGASAN SETERUSNYA',
+        verifyBtn: 'SELESAI TOPIK',
+        charWelcome: 'Selamat datang! Pilih mana-mana topik secara bebas — tiada urutan diperlukan. Semua stesen terbuka!',
+        charName: 'Penjaga Selamat',
+        toastTitle: 'Topik Selesai!',
+        toastSub: 'Pilih topik lain untuk meneruskan.',
+        toastBtn: 'TERUSKAN!',
+        footer: 'Dikuasakan oleh Audio Web & LED Burst',
+    }
+};
+
+const tasksDB_en = {
+    recycling: {
+        title: 'RECYCLING SEGMENT RUN', color: 'emerald', colorHex: '#10b981', icon: 'fa-recycle',
+        dialogue: [
+            "Let's clean this planet! Find 5 recyclable items around you and snap them!",
+            "Brain check time! Test your eco knowledge with this quiz.",
+            "Great work! Now go to a sorting bin, drop an item, and capture it."
+        ],
+        successPhrases: ["Purrfectly sorted! Nature rewards you!", "Incredible! That's how we avoid landfill waste!"],
+        failPhrases: ["Hmm, reconsider that one!", "Whoops! Think about material breakdown."]
+    },
+    'safety-driving': {
+        title: 'SAFE DRIVING CONTROLS', color: 'amber', colorHex: '#f59e0b', icon: 'fa-car',
+        dialogue: [
+            "Stay sharp! Tap the panel the INSTANT it flashes red!",
+            "Show your marshal a full mirror check and shoulder blindspot sweep.",
+            "Safety quiz time — measure your safe following distance knowledge."
+        ],
+        successPhrases: ["Lightning reflexes! Braking fully optimized!", "Flawless safety check! Points logged."],
+        failPhrases: ["Early tap detected! Stay patient.", "Incorrect headway metric. Try again!"]
+    },
+    'slip-trip-fall': {
+        title: 'SLIP, TRIP, FALL RISK ARENA', color: 'rose', colorHex: '#f43f5e', icon: 'fa-person-falling',
+        dialogue: [
+            "Scan the floor blueprint! Find all 3 active hazard markers.",
+            "Housekeeping time! Clear your row walkway lanes right now.",
+            "Ergonomic check! Demonstrate a perfect safe lifting posture."
+        ],
+        successPhrases: ["Hazard logged and isolated!", "Walkway clear — zero incident risk!"],
+        failPhrases: ["Keep scanning the blueprint!", "Posture skewed — reset and lift cleanly."]
+    },
+    'heart-health': {
+        title: 'CARDIO REINFORCEMENT SECTOR', color: 'red', colorHex: '#ef4444', icon: 'fa-heart-pulse',
+        dialogue: [
+            "Pulse accelerator! Complete 15 jumping jacks before the timer hits zero!",
+            "CPR rhythm training! Tap the heart in sync with the beat pulses.",
+            "Nutrition round — pick the best combo for heart health."
+        ],
+        successPhrases: ["Cardiovascular engine firing perfectly!", "Rhythm held! Cadence sustained."],
+        failPhrases: ["Clock ran dry! Keep energy up!", "Pace dropped — tap on target beats."]
+    }
+};
+
+const tasksDB_ms = {
+    recycling: {
+        title: 'SEGMEN KITAR SEMULA', color: 'emerald', colorHex: '#10b981', icon: 'fa-recycle',
+        dialogue: [
+            "Mari bersihkan planet ini! Cari 5 item boleh dikitar semula dan tangkap gambarnya!",
+            "Masa untuk kuiz! Uji pengetahuan eko anda.",
+            "Hebat! Pergi ke tong pengasingan, buang satu item, dan ambil gambarnya."
+        ],
+        successPhrases: ["Sempurna! Alam sekitar terima kasih!", "Luar biasa! Begitulah kita elak tapak pelupusan!"],
+        failPhrases: ["Hmm, fikir semula pilihan itu!", "Ops! Fikirkan tentang pereputan bahan."]
+    },
+    'safety-driving': {
+        title: 'KAWALAN MEMANDU SELAMAT', color: 'amber', colorHex: '#f59e0b', icon: 'fa-car',
+        dialogue: [
+            "Berwaspada! Ketuk panel serta-merta apabila ia berkelip merah!",
+            "Tunjukkan kepada marshal anda pemeriksaan cermin dan titik buta.",
+            "Kuiz keselamatan — uji pengetahuan jarak selamat anda."
+        ],
+        successPhrases: ["Refleks kilat! Brek sempurna!", "Pemeriksaan keselamatan terbaik! Mata dicatatkan."],
+        failPhrases: ["Ketuk awal dikesan! Bersabar.", "Jarak tidak tepat. Cuba lagi!"]
+    },
+    'slip-trip-fall': {
+        title: 'ARENA RISIKO TERPELESET', color: 'rose', colorHex: '#f43f5e', icon: 'fa-person-falling',
+        dialogue: [
+            "Imbas pelan lantai! Cari semua 3 tanda bahaya aktif.",
+            "Masa pembersihan! Bersihkan laluan berjalan kaki anda sekarang.",
+            "Semak ergonomik! Tunjukkan postur angkat selamat yang sempurna."
+        ],
+        successPhrases: ["Bahaya dikenal pasti dan diasingkan!", "Laluan bersih — tiada risiko insiden!"],
+        failPhrases: ["Teruskan mengimbas pelan!", "Postur tidak tepat — tetapkan semula dan angkat dengan betul."]
+    },
+    'heart-health': {
+        title: 'SEKTOR PENGUKUHAN KARDIO', color: 'red', colorHex: '#ef4444', icon: 'fa-heart-pulse',
+        dialogue: [
+            "Pemecut denyutan! Selesaikan 15 jumping jack sebelum masa habis!",
+            "Latihan irama CPR! Ketuk jantung mengikut rentak.",
+            "Pusingan pemakanan — pilih kombinasi terbaik untuk kesihatan jantung."
+        ],
+        successPhrases: ["Enjin kardiovaskular berfungsi sempurna!", "Irama terjaga! Kadens berterusan."],
+        failPhrases: ["Masa habis! Kekalkan tenaga!", "Rentak jatuh — ketuk mengikut rentak sasaran."]
+    }
+};
+
+function getTasksDB() { return currentLang === 'ms' ? tasksDB_ms : tasksDB_en; }
+
+const stepsConfig_en = {
+    recycling: {
+        1: { type:'real-camera', instruction:'Snap 5 recyclable items — plastic bottles, paper cups, cans — around your current area.', target:5, items:[] },
+        2: { type:'quiz', instruction:'How long does a conventional plastic bottle take to degrade in a landfill?', options:['45 Years','180 Years','450+ Years'], correct:2, selected:null },
+        3: { type:'real-camera', instruction:'Walk to the physical waste bins, drop an item correctly, and take a photo proof.', target:1, items:[] }
+    },
+    'safety-driving': {
+        1: { type:'reaction', instruction:'HAZARD RESPONSE TEST: Click the panel instantly once it flashes bright RED!', state:'idle', bestTime:null },
+        2: { type:'physical-card', icon:'fa-eye', headline:'Mirror & Blindspot Check', instruction:'Face your marshal, demonstrate correct mirror check and full head-over-shoulder blindspot viewing sequence.' },
+        3: { type:'quiz', instruction:'What is the standard safe following distance under clear weather conditions?', options:['1-Second gap','3-Second rule','Minimal bumper distance'], correct:1, selected:null }
+    },
+    'slip-trip-fall': {
+        1: { type:'hazard-blueprint', instruction:'RISK SPOTTER: Select all 3 active danger markers on the floor layout diagram.', found:[], max:3 },
+        2: { type:'physical-card', icon:'fa-triangle-exclamation', headline:'Active Walkway Clutter Check', instruction:'Scan your floor space. Pick up loose items, tuck in stray chairs, and report completion.' },
+        3: { type:'real-camera', instruction:'ERGONOMIC CAPTURE: Execute a perfect parallel squat lift stance and take a profile photo.', target:1, items:[] }
+    },
+    'heart-health': {
+        1: { type:'timer-card', instruction:'PULSE ACCELERATOR: Complete 15 full jumping jacks before the countdown hits zero!', timeLeft:15, running:false },
+        2: { type:'rhythm', instruction:'CPR COMPRESSION MONITOR: Tap the heart icon in sync with the pulse ring expansions — 100-120 BPM.', count:0, target:15 },
+        3: { type:'quiz', instruction:'Which combination best promotes arterial health and cardiac strength?', options:['Refined oils & high-fructose syrup','Oat bran, wild salmon & fresh avocado','Processed sodium-packed convenience food'], correct:1, selected:null }
+    }
+};
+
+const stepsConfig_ms = {
+    recycling: {
+        1: { type:'real-camera', instruction:'Ambil 5 item boleh dikitar semula — botol plastik, cawan kertas, tin — di sekitar anda.', target:5, items:[] },
+        2: { type:'quiz', instruction:'Berapa lama botol plastik biasa mengurai dalam tapak pelupusan?', options:['45 Tahun','180 Tahun','450+ Tahun'], correct:2, selected:null },
+        3: { type:'real-camera', instruction:'Pergi ke tong sampah fizikal, buang item dengan betul, dan ambil gambar bukti.', target:1, items:[] }
+    },
+    'safety-driving': {
+        1: { type:'reaction', instruction:'UJIAN TINDAK BALAS BAHAYA: Ketuk panel serta-merta apabila berkelip MERAH!', state:'idle', bestTime:null },
+        2: { type:'physical-card', icon:'fa-eye', headline:'Pemeriksaan Cermin & Titik Buta', instruction:'Hadap marshal anda, tunjukkan pemeriksaan cermin yang betul dan urutan penglihatan titik buta.' },
+        3: { type:'quiz', instruction:'Apakah jarak selamat yang standard dalam keadaan cuaca cerah?', options:['Jurang 1 Saat','Peraturan 3 Saat','Jarak bumper minimum'], correct:1, selected:null }
+    },
+    'slip-trip-fall': {
+        1: { type:'hazard-blueprint', instruction:'PENGESAN RISIKO: Pilih semua 3 penanda bahaya aktif pada pelan lantai.', found:[], max:3 },
+        2: { type:'physical-card', icon:'fa-triangle-exclamation', headline:'Semakan Halangan Laluan Aktif', instruction:'Imbas ruang lantai anda. Kutip item longgar, masukkan kerusi, dan laporkan penyelesaian.' },
+        3: { type:'real-camera', instruction:'TANGKAPAN ERGONOMIK: Lakukan postur angkat jongkok selamat yang sempurna dan ambil foto.', target:1, items:[] }
+    },
+    'heart-health': {
+        1: { type:'timer-card', instruction:'PEMECUT DENYUTAN: Selesaikan 15 jumping jack sebelum kiraan balik mencapai sifar!', timeLeft:15, running:false },
+        2: { type:'rhythm', instruction:'MONITOR MAMPATAN CPR: Ketuk ikon jantung mengikut rentak — 100-120 BPM.', count:0, target:15 },
+        3: { type:'quiz', instruction:'Kombinasi mana yang terbaik untuk kesihatan arteri dan kekuatan jantung?', options:['Minyak halus & sirap fruktosa','Oat bran, salmon liar & avokado segar','Makanan kemudahan bersodium tinggi'], correct:1, selected:null }
+    }
+};
+
+function getStepsConfig() { return currentLang === 'ms' ? stepsConfig_ms : stepsConfig_en; }
+
+// Hazard text by language
+const hazardTexts = {
+    en: [
+        "EXPOSED HIGH-VOLTAGE CONNECTORS across the aisleway! Tripping hazards near wet machining centers can throw falling workers into live electrical panels.",
+        "UNCONTAINED OIL POOLING SLICK! Liquid accumulations drastically cut floor traction, precipitating severe balance-loss accidents.",
+        "ABANDONED CRATE BLOCKING FORKLIFT LINE! Loose pallets in transport vectors can disrupt handling vehicles, triggering crushing incidents."
+    ],
+    ms: [
+        "PENDAWAIAN BERTEGANGAN TINGGI TERDEDAH merentasi lorong! Bahaya tersandung berhampiran pusat pemesinan basah boleh melemparkan pekerja ke panel elektrik hidup.",
+        "TUMPAHAN MINYAK TIDAK TERKAWAL! Pengumpulan cecair memotong daya traksi lantai dengan drastik, menyebabkan kemalangan kehilangan imbangan yang teruk.",
+        "PETI TERBIAR MENGHALANG LALUAN FORKLIFT! Palet longgar dalam vektor pengangkutan boleh mengganggu kenderaan pengendalian, mencetuskan insiden peremukan."
+    ]
+};
+
+// ==================== STATE ====================
+let activeTopic = null;
+let activeStep = 1;
+const totalSteps = 3;
+let localCameraStream = null;
+let runTimeElapsed = 0;
+let runTimerInterval = null;
+let completedTopics = {};
+let clockTimerInterval = null;
+let reactionTimeStartMarker;
+
+// ==================== LANGUAGE TOGGLE ====================
+function toggleLanguage() {
+    currentLang = currentLang === 'en' ? 'ms' : 'en';
+    document.getElementById('current-lang-label').textContent = currentLang.toUpperCase();
+    applyTranslations();
+    if (activeTopic) renderActiveTask();
+}
+
+function applyTranslations() {
+    const t = T[currentLang];
+    document.getElementById('welcome-badge').textContent    = t.welcomeBadge;
+    document.getElementById('welcome-title').textContent    = t.welcomeTitle;
+    document.getElementById('welcome-desc').textContent     = t.welcomeDesc;
+    document.getElementById('enter-btn-text').textContent   = t.enterBtn;
+    document.getElementById('nav-title').textContent        = t.navTitle;
+    document.getElementById('timer-label').textContent      = t.timerLabel;
+    document.getElementById('disconnect-text').textContent  = t.disconnect;
+    document.getElementById('tab1').textContent             = t.tab1;
+    document.getElementById('tab2').textContent             = t.tab2;
+    document.getElementById('tab3').textContent             = t.tab3;
+    document.getElementById('tab4').textContent             = t.tab4;
+    document.getElementById('select-topic-hint').textContent= t.selectHint;
+    document.getElementById('progress-label').textContent   = t.progressLabel;
+    document.getElementById('modal-title').textContent      = t.modalTitle;
+    document.getElementById('modal-ack-btn').textContent    = t.modalAck;
+    document.getElementById('prev-btn-text').textContent    = t.prevBtn;
+    document.getElementById('character-dialogue-cloud').textContent = t.charWelcome;
+    document.getElementById('character-name-plate').textContent     = t.charName;
+    document.getElementById('toast-title').textContent      = t.toastTitle;
+    document.getElementById('toast-subtitle').textContent   = t.toastSub;
+    document.getElementById('toast-btn-text').textContent   = t.toastBtn;
+    document.getElementById('footer-txt').textContent       = t.footer;
+    // update next-btn if visible
+    const nb = document.getElementById('next-btn');
+    if (!nb.classList.contains('hidden')) {
+        document.getElementById('next-btn-text').textContent = activeStep === totalSteps ? t.verifyBtn : t.nextBtn;
+    }
+}
+
+// ==================== PARTICLES CANVAS ====================
+(function(){
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let W, H, particles = [];
+    function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+    const colors = ['#6366f1','#8b5cf6','#10b981','#f59e0b','#f43f5e'];
+    for(let i=0;i<60;i++) particles.push({
+        x:Math.random()*1920, y:Math.random()*1080,
+        r:Math.random()*2+0.5,
+        dx:(Math.random()-0.5)*0.3, dy:(Math.random()-0.5)*0.3,
+        color:colors[Math.floor(Math.random()*colors.length)],
+        alpha:Math.random()*0.4+0.1
+    });
+    function draw(){
+        ctx.clearRect(0,0,W,H);
+        particles.forEach(p=>{
+            ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+            ctx.fillStyle=p.color; ctx.globalAlpha=p.alpha; ctx.fill();
+            p.x+=p.dx; p.y+=p.dy;
+            if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+            if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+        });
+        ctx.globalAlpha=1; requestAnimationFrame(draw);
+    }
+    draw();
+})();
+
+// ==================== SOUND FX ====================
+function playSoundFX(type) {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if(!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const master = ctx.createGain(); master.gain.value=0.7; master.connect(ctx.destination);
+
+        const play=(freq,type_,dur,gain,startT=0,freqEnd=null)=>{
+            const o=ctx.createOscillator(), g=ctx.createGain();
+            o.type=type_; o.frequency.setValueAtTime(freq,ctx.currentTime+startT);
+            if(freqEnd) o.frequency.linearRampToValueAtTime(freqEnd,ctx.currentTime+startT+dur);
+            g.gain.setValueAtTime(gain,ctx.currentTime+startT);
+            g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+startT+dur);
+            o.connect(g); g.connect(master); o.start(ctx.currentTime+startT); o.stop(ctx.currentTime+startT+dur+0.01);
+        };
+
+        if(type==='click')       { play(200,'triangle',0.05,0.08); }
+        else if(type==='tick')   { play(1400,'sine',0.02,0.04); }
+        else if(type==='synth')  { play(440,'square',0.06,0.04,0); play(587,'square',0.06,0.04,0.07); }
+        else if(type==='whoosh') { play(800,'sawtooth',0.15,0.05,0,200); }
+        else if(type==='pop')    { play(600,'sine',0.04,0.1,0); play(900,'sine',0.03,0.05,0.04); }
+        else if(type==='coin')   { play(987,'sine',0.05,0.12,0); play(1319,'sine',0.05,0.1,0.06); play(1568,'sine',0.08,0.08,0.13); }
+        else if(type==='error')  { play(200,'sawtooth',0.1,0.1,0,100); play(150,'square',0.1,0.08,0.12); }
+        else if(type==='success'){ play(523,'sine',0.08,0.1,0); play(659,'sine',0.07,0.08,0.1); play(784,'sine',0.09,0.12,0.2); }
+        else if(type==='fail')   { play(220,'sawtooth',0.12,0.12,0,100); }
+        else if(type==='power')  { play(110,'sawtooth',0.3,0.08,0,220); play(330,'square',0.2,0.05,0.15); }
+        else if(type==='complete'){
+            [261.63,329.63,392,523.25,659.25,783.99].forEach((f,i)=>play(f,'sine',0.18,0.1,i*0.06));
+        }
+        else if(type==='fanfare'){
+            [523,659,784,1047].forEach((f,i)=>play(f,'triangle',0.25,0.12,i*0.1));
+            play(1047,'sine',0.4,0.15,0.5);
+        }
+        else if(type==='levelup'){
+            [392,494,587,784].forEach((f,i)=>play(f,'square',0.12,0.08,i*0.07));
+        }
+    } catch(e){ console.log('Audio error:',e); }
+}
+
+// ==================== VISUAL EFFECTS ====================
+function spawnColorBurstRipple(e) {
+    playSoundFX('click');
+    const colors=['#00f5ff','#ff007f','#39ff14','#fffb00','#ff6c00','#9d00ff'];
+    const el=document.createElement('div');
+    el.className='click-ripple-circle';
+    el.style.left=e.clientX+'px'; el.style.top=e.clientY+'px';
+    el.style.color=colors[Math.floor(Math.random()*colors.length)];
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),500);
+}
+
+function spawnConfetti(count=60) {
+    const colors=['#6366f1','#10b981','#f59e0b','#f43f5e','#8b5cf6','#06b6d4','#fbbf24','#4ade80'];
+    for(let i=0;i<count;i++){
+        const el=document.createElement('div');
+        el.className='confetti-piece';
+        el.style.left=Math.random()*100+'vw';
+        el.style.top='-20px';
+        el.style.width=(Math.random()*10+4)+'px';
+        el.style.height=(Math.random()*6+3)+'px';
+        el.style.background=colors[Math.floor(Math.random()*colors.length)];
+        el.style.animationDuration=(Math.random()*2+1.5)+'s';
+        el.style.animationDelay=(Math.random()*0.5)+'s';
+        document.body.appendChild(el);
+        setTimeout(()=>el.remove(), 3500);
+    }
+}
+
+function spawnStarBurst(x,y) {
+    const emojis=['⭐','✨','💥','🎉','🌟','💫'];
+    const el=document.createElement('div');
+    el.className='star-burst';
+    el.style.left=x+'px'; el.style.top=y+'px';
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),800);
+}
+
+function shakeElement(id){
+    const el=document.getElementById(id); if(!el)return;
+    el.classList.add('shake-anim');
+    setTimeout(()=>el.classList.remove('shake-anim'),400);
+}
+
+// ==================== TIMER ====================
+function updateSpeedrunTimer() {
+    runTimeElapsed+=0.1;
+    const m=Math.floor(runTimeElapsed/60).toString().padStart(2,'0');
+    const s=Math.floor(runTimeElapsed%60).toString().padStart(2,'0');
+    const d=Math.floor((runTimeElapsed%1)*10);
+    document.getElementById('global-speedrun-clock').innerText=`${m}:${s}.${d}`;
+}
+function startGlobalTimer(){ if(!runTimerInterval) runTimerInterval=setInterval(updateSpeedrunTimer,100); }
+function stopGlobalTimer(){ clearInterval(runTimerInterval); runTimerInterval=null; }
+
+// ==================== QR CODE ====================
+window.addEventListener('DOMContentLoaded',()=>{
+    try {
+        new QRCode(document.getElementById('qrcode-target-box'),{
+            text:window.location.href, width:160, height:160,
+            colorDark:'#020617', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H
+        });
+    } catch(e){ document.getElementById('qrcode-target-box').innerHTML='<div style="width:160px;height:160px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#94a3b8;text-align:center;padding:8px;">QR code loads here</div>'; }
+    applyTranslations();
+});
+
+// ==================== NAVIGATION ====================
+function navigateToGameTerminal() {
+    playSoundFX('power');
+    document.getElementById('page-welcome-screen').classList.add('hidden');
+    document.getElementById('page-gameplay-terminal').classList.remove('hidden');
+    startGlobalTimer();
+    updateOverallProgress();
+}
+
+function navigateToWelcomeScreen() {
+    stopActiveCameraStream();
+    stopGlobalTimer();
+    if(clockTimerInterval){ clearInterval(clockTimerInterval); clockTimerInterval=null; }
+    document.getElementById('page-gameplay-terminal').classList.add('hidden');
+    document.getElementById('page-welcome-screen').classList.remove('hidden');
+    playSoundFX('whoosh');
+}
+
+// ==================== PROGRESS ====================
+function updateOverallProgress() {
+    const topics=['recycling','safety-driving','slip-trip-fall','heart-health'];
+    const done=topics.filter(t=>completedTopics[t]).length;
+    const pct=Math.round((done/topics.length)*100);
+    document.getElementById('overall-progress-bar').style.width=pct+'%';
+    document.getElementById('overall-progress-pct').textContent=pct+'%';
+
+    // Mark done badge on tabs
+    const doneIds={recycling:'tab1',['safety-driving']:'tab2',['slip-trip-fall']:'tab3',['heart-health']:'tab4'};
+    topics.forEach(t=>{
+        const doneEl=document.getElementById(doneIds[t]+'-done');
+        if(doneEl) doneEl.classList.toggle('hidden',!completedTopics[t]);
+    });
+}
+
+// ==================== TOPIC SWITCH (ALL UNLOCKED) ====================
+function switchTopic(topicId) {
+    playSoundFX('synth');
+    stopActiveCameraStream();
+    if(clockTimerInterval){ clearInterval(clockTimerInterval); clockTimerInterval=null; }
+    activeTopic = topicId;
+    activeStep = 1;
+
+    // Reset step config for this topic on each fresh visit (don't reset completed)
+    const freshEN = {
+        recycling:      { 1:{type:'real-camera',instruction:'Snap 5 recyclable items — plastic bottles, paper cups, cans — around your current area.',target:5,items:[]}, 2:{type:'quiz',instruction:'How long does a conventional plastic bottle take to degrade in a landfill?',options:['45 Years','180 Years','450+ Years'],correct:2,selected:null}, 3:{type:'real-camera',instruction:'Walk to the physical waste bins, drop an item correctly, and take a photo proof.',target:1,items:[]} },
+        'safety-driving':{ 1:{type:'reaction',instruction:'HAZARD RESPONSE TEST: Click the panel instantly once it flashes bright RED!',state:'idle',bestTime:null}, 2:{type:'physical-card',icon:'fa-eye',headline:'Mirror & Blindspot Check',instruction:'Face your marshal, demonstrate correct mirror check and full head-over-shoulder blindspot viewing sequence.'}, 3:{type:'quiz',instruction:'What is the standard safe following distance under clear weather conditions?',options:['1-Second gap','3-Second rule','Minimal bumper distance'],correct:1,selected:null} },
+        'slip-trip-fall':{ 1:{type:'hazard-blueprint',instruction:'RISK SPOTTER: Select all 3 active danger markers on the floor layout diagram.',found:[],max:3}, 2:{type:'physical-card',icon:'fa-triangle-exclamation',headline:'Active Walkway Clutter Check',instruction:'Scan your floor space. Pick up loose items, tuck in stray chairs, and report completion.'}, 3:{type:'real-camera',instruction:'ERGONOMIC CAPTURE: Execute a perfect parallel squat lift stance and take a profile photo.',target:1,items:[]} },
+        'heart-health':  { 1:{type:'timer-card',instruction:'PULSE ACCELERATOR: Complete 15 full jumping jacks before the countdown hits zero!',timeLeft:15,running:false}, 2:{type:'rhythm',instruction:'CPR COMPRESSION MONITOR: Tap the heart icon in sync with the pulse ring expansions — 100-120 BPM.',count:0,target:15}, 3:{type:'quiz',instruction:'Which combination best promotes arterial health and cardiac strength?',options:['Refined oils & high-fructose syrup','Oat bran, wild salmon & fresh avocado','Processed sodium-packed convenience food'],correct:1,selected:null} }
+    };
+    const freshMS = {
+        recycling:      { 1:{type:'real-camera',instruction:'Ambil 5 item boleh dikitar semula — botol plastik, cawan kertas, tin — di sekitar anda.',target:5,items:[]}, 2:{type:'quiz',instruction:'Berapa lama botol plastik biasa mengurai dalam tapak pelupusan?',options:['45 Tahun','180 Tahun','450+ Tahun'],correct:2,selected:null}, 3:{type:'real-camera',instruction:'Pergi ke tong sampah fizikal, buang item dengan betul, dan ambil gambar bukti.',target:1,items:[]} },
+        'safety-driving':{ 1:{type:'reaction',instruction:'UJIAN TINDAK BALAS BAHAYA: Ketuk panel serta-merta apabila berkelip MERAH!',state:'idle',bestTime:null}, 2:{type:'physical-card',icon:'fa-eye',headline:'Pemeriksaan Cermin & Titik Buta',instruction:'Hadap marshal anda, tunjukkan pemeriksaan cermin yang betul dan urutan penglihatan titik buta.'}, 3:{type:'quiz',instruction:'Apakah jarak selamat yang standard dalam keadaan cuaca cerah?',options:['Jurang 1 Saat','Peraturan 3 Saat','Jarak bumper minimum'],correct:1,selected:null} },
+        'slip-trip-fall':{ 1:{type:'hazard-blueprint',instruction:'PENGESAN RISIKO: Pilih semua 3 penanda bahaya aktif pada pelan lantai.',found:[],max:3}, 2:{type:'physical-card',icon:'fa-triangle-exclamation',headline:'Semakan Halangan Laluan Aktif',instruction:'Imbas ruang lantai anda. Kutip item longgar, masukkan kerusi, dan laporkan penyelesaian.'}, 3:{type:'real-camera',instruction:'TANGKAPAN ERGONOMIK: Lakukan postur angkat jongkok selamat yang sempurna dan ambil foto.',target:1,items:[]} },
+        'heart-health':  { 1:{type:'timer-card',instruction:'PEMECUT DENYUTAN: Selesaikan 15 jumping jack sebelum kiraan balik mencapai sifar!',timeLeft:15,running:false}, 2:{type:'rhythm',instruction:'MONITOR MAMPATAN CPR: Ketuk ikon jantung mengikut rentak — 100-120 BPM.',count:0,target:15}, 3:{type:'quiz',instruction:'Kombinasi mana yang terbaik untuk kesihatan arteri dan kekuatan jantung?',options:['Minyak halus & sirap fruktosa','Oat bran, salmon liar & avokado segar','Makanan kemudahan bersodium tinggi'],correct:1,selected:null} }
+    };
+    window._liveSteps = currentLang==='ms' ? freshMS[topicId] : freshEN[topicId];
+
+    // Highlight active tab
+    document.querySelectorAll('.topic-tab').forEach(tab=>{
+        const tId=tab.id.replace('tab-','');
+        const db=getTasksDB();
+        const d=db[tId];
+        if(tId===topicId){
+            tab.className=`topic-tab p-4 bg-${d.color}-900/60 rounded-2xl text-center shadow-lg border-2 border-${d.color}-400 transition hover:scale-105 btn-ripple tab-active-glow`;
+        } else {
+            tab.className='topic-tab p-4 bg-slate-900 rounded-2xl text-center shadow-lg border border-slate-700 transition hover:scale-105 btn-ripple';
+        }
+    });
+
+    const db=getTasksDB();
+    triggerCharacterReaction('neutral', db[topicId].dialogue[0]);
+
+    document.getElementById('next-btn').classList.remove('hidden');
+    renderActiveTask();
+}
+
+// ==================== GET LIVE STEP ====================
+function getLiveStep() {
+    if(!window._liveSteps) return null;
+    return window._liveSteps[activeStep];
+}
+
+// ==================== RENDER ====================
+function renderActiveTask() {
+    const db = getTasksDB();
+    const topic = db[activeTopic];
+    if(!topic || !window._liveSteps) return;
+    const task = getLiveStep();
+    if(!task) return;
+    const hex = topic.colorHex;
+
+    document.getElementById('current-topic-title').innerText = topic.title;
+    document.getElementById('current-topic-title').style.color = hex;
+
+    for(let i=1;i<=totalSteps;i++){
+        const dot=document.getElementById(`dot-${i}`);
+        dot.style.backgroundColor = i<=activeStep ? hex : '#334155';
+        dot.style.transform = i===activeStep ? 'scale(1.4)' : 'scale(1)';
+    }
+
+    document.getElementById('prev-btn').style.display = activeStep===1 ? 'none' : 'block';
+    const nb=document.getElementById('next-btn');
+    nb.style.backgroundColor=hex;
+    const nbText=document.getElementById('next-btn-text');
+    nbText.textContent = activeStep===totalSteps ? T[currentLang].verifyBtn : T[currentLang].nextBtn;
+
+    const container=document.getElementById('game-content-area');
+    let html=`<p class="text-sm md:text-base font-semibold text-slate-300 text-center mb-6 max-w-md mx-auto leading-relaxed">${task.instruction}</p>`;
+
+    // ── REAL CAMERA ──
+    if(task.type==='real-camera'){
+        html+=`<div class="flex flex-col items-center space-y-4 max-w-sm mx-auto w-full">
+            <div class="relative w-full aspect-video bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
+                <video id="device-camera-feed" autoplay playsinline class="w-full h-full object-cover"></video>
+            </div>
+            <button onclick="executeHardwareCaptureSnapshot()" class="w-full flex items-center justify-center space-x-2 py-3 rounded-xl font-black text-slate-950 shadow-md transition transform active:scale-95 btn-ripple" style="background-color:${hex}">
+                <i class="fa-solid fa-camera text-lg"></i>
+                <span>SNAP (${task.items.length}/${task.target})</span>
+            </button>
+            <div class="flex gap-2 overflow-x-auto w-full py-2 scrollbar-none justify-center">
+                ${task.items.map(img=>`<img src="${img}" class="w-14 h-14 object-cover rounded-lg border-2 border-slate-700 flex-shrink-0" />`).join('')}
+            </div>
+        </div>`;
+        container.innerHTML=html;
+        setTimeout(initializeHardwareCameraStream,50);
+        return;
+    }
+
+    stopActiveCameraStream();
+
+    // ── HAZARD BLUEPRINT ──
+    if(task.type==='hazard-blueprint'){
+        const hTexts=hazardTexts[currentLang];
+        html+=`<div class="relative w-full max-w-md mx-auto rounded-2xl border border-slate-800 p-4 shadow-2xl bg-slate-900/60 blueprint-grid h-64 flex flex-col justify-between overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent pointer-events-none"></div>
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 z-10 border-b border-slate-800/60 pb-1.5">
+                <span>INDUSTRIAL WORKSPACE MAP</span><span>ACTIVE RADAR</span>
+            </div>
+            <div class="absolute bottom-[20%] left-[8%] bg-slate-950/90 text-slate-400 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] font-bold font-mono shadow-md pointer-events-none">Forklift</div>
+            <div class="absolute top-[25%] right-[8%] bg-slate-950/90 text-slate-400 border border-slate-800 rounded-lg px-2.5 py-2.5 text-[10px] font-bold font-mono shadow-md pointer-events-none">Console</div>
+            ${[1,2,3].map((id,i)=>{
+                const positions=['top-[32%] left-[24%]','top-[58%] left-[52%] transform -translate-x-1/2','bottom-[22%] right-[22%]'];
+                const icons=['fa-bolt','fa-droplet','fa-box'];
+                const found=task.found.includes(id);
+                return `<button onclick="revealHazardExplanation(${id},'${hTexts[i].replace(/'/g,"\\'")}','${hex}')" class="absolute ${positions[i]} flex items-center justify-center w-10 h-10 z-20 outline-none">
+                    <span class="absolute w-8 h-8 rounded-full bg-rose-500 ping-ring ${found?'hidden':''}"></span>
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center border transition shadow-lg ${found?'bg-emerald-500 border-emerald-300 text-slate-950':'bg-slate-950 border-rose-500 text-rose-500'}">
+                        <i class="fa-solid ${found?'fa-check text-xs':icons[i]+' text-xs'}"></i>
+                    </div>
+                </button>`;
+            }).join('')}
+            <div class="z-10 flex items-center justify-between font-mono text-xs border-t border-slate-800/80 pt-2 bg-slate-950/90 p-2 rounded-xl">
+                <span class="text-slate-400">HAZARDS FOUND:</span>
+                <span class="font-bold text-rose-400 tracking-widest">${task.found.length} / ${task.max}</span>
+            </div>
+        </div>`;
+    }
+
+    // ── QUIZ ──
+    else if(task.type==='quiz'){
+        html+=`<div class="flex flex-col space-y-2.5 max-w-sm mx-auto w-full">`;
+        task.options.forEach((opt,idx)=>{
+            const sel=task.selected===idx;
+            const isCorrect=idx===task.correct;
+            let borderStyle=`border:1.5px solid #334155`;
+            let bg='background:rgba(15,23,42,0.6)';
+            if(sel && isCorrect){ borderStyle=`border:2px solid ${hex}`; bg='background:rgba(16,185,129,0.1)'; }
+            else if(sel && !isCorrect){ borderStyle='border:2px solid #f43f5e'; bg='background:rgba(244,63,94,0.08)'; }
+            html+=`<button onclick="registerQuizSelection(${idx})" style="${borderStyle};${bg}" class="w-full text-left p-4 rounded-xl hover:bg-slate-900/80 font-medium transition flex items-center justify-between outline-none btn-ripple">
+                <span class="text-xs md:text-sm text-slate-300 font-bold">${opt}</span>
+                <div class="w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center flex-shrink-0 ml-2">
+                    ${sel?`<i class="fa-solid ${isCorrect?'fa-check text-emerald-400':'fa-x text-rose-400'} text-[10px]"></i>`:''}
+                </div>
+            </button>`;
+        });
+        html+=`</div>`;
+    }
+
+    // ── REACTION ──
+    else if(task.type==='reaction'){
+        let cardStyle='bg-slate-950 border-slate-800'; let action='initializeReactionGame()'; let label='TAP TO BEGIN REFLEX TEST';
+        if(task.state==='waiting'){ cardStyle='bg-slate-900 border-amber-500/40 animate-pulse'; action='faultEarlyReaction()'; label='STEADY... WAIT FOR RED!'; }
+        else if(task.state==='flash'){ cardStyle='bg-red-600 border-red-400 animate-bounce'; action='registerReactionTap()'; label='💥 TAP NOW! 💥'; }
+        else if(task.state==='done'){ cardStyle='bg-black border-emerald-500 text-emerald-400'; action='initializeReactionGame()'; label='✓ RESET & TRY AGAIN'; }
+        html+=`<div class="flex flex-col items-center space-y-4 max-w-xs mx-auto w-full">
+            <div onclick="${action}" class="w-full h-36 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer text-center font-black tracking-widest text-xs p-4 select-none transition ${cardStyle}">
+                ${label}
+            </div>
+            <p class="text-[11px] font-mono text-slate-500 text-center">${task.bestTime?`⚡ Reflex Time: <span class="text-amber-400 font-bold">${task.bestTime}s</span>` : 'System idle. Awaiting tap.'}</p>
+        </div>`;
+    }
+
+    // ── TIMER CARD ──
+    else if(task.type==='timer-card'){
+        const pct=Math.round((task.timeLeft/15)*100);
+        html+=`<div class="flex flex-col items-center space-y-4 max-w-xs mx-auto w-full">
+            <div class="text-6xl font-black font-mono text-red-500 tracking-tight bg-black px-10 py-4 rounded-2xl border border-slate-800 shadow-inner timer-glow">${task.timeLeft}s</div>
+            <div class="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-500" style="width:${pct}%;background:${hex}"></div>
+            </div>
+            <button onclick="toggleCardioTimer()" class="w-full py-3 rounded-xl font-bold border text-sm transition tracking-wide btn-ripple" style="border-color:${hex};color:${hex};background:rgba(0,0,0,0.2)">
+                <i class="fa-solid ${task.running?'fa-pause':'fa-play'} mr-2"></i>${task.running?(currentLang==='ms'?'JEDA':'PAUSE'):(currentLang==='ms'?'MULAKAN':'START')}
+            </button>
+        </div>`;
+    }
+
+    // ── RHYTHM ──
+    else if(task.type==='rhythm'){
+        const pct=Math.round((task.count/task.target)*100);
+        html+=`<div class="flex flex-col items-center space-y-5 max-w-xs mx-auto w-full">
+            <button onclick="registerRhythmCompressionBeat()" class="w-24 h-24 rounded-full bg-red-600 hover:bg-red-500 text-white flex flex-col items-center justify-center shadow-2xl transform active:scale-90 border-4 border-red-400/50 outline-none transition btn-ripple heartbeat">
+                <i class="fa-solid fa-heart-pulse text-2xl"></i>
+            </button>
+            <div class="w-full bg-slate-950 h-3 rounded-full border border-slate-800 overflow-hidden">
+                <div class="h-full bg-red-500 transition-all duration-100 rounded-full" style="width:${pct}%"></div>
+            </div>
+            <span class="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-widest">COMPRESSIONS: ${task.count} / ${task.target}</span>
+        </div>`;
+    }
+
+    // ── PHYSICAL CARD ──
+    else if(task.type==='physical-card'){
+        html+=`<div class="flex flex-col items-center p-6 bg-slate-950 border border-slate-800 rounded-2xl text-center max-w-sm mx-auto shadow-inner">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 border border-slate-700" style="color:${hex};background:rgba(99,102,241,0.08)">
+                <i class="fa-solid ${task.icon} text-2xl"></i>
+            </div>
+            <h4 class="text-xs font-bold text-slate-200 uppercase mb-2 tracking-wider">${task.headline}</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">${task.instruction}</p>
+            <div class="mt-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-2 text-[10px] text-emerald-400 font-bold">${currentLang==='ms'?'Tunjukkan kepada marshal anda, kemudian klik seterusnya':'Show your marshal, then click Next'}</div>
+        </div>`;
+    }
+
+    container.innerHTML=html;
+}
+
+// ==================== CAMERA ====================
+async function initializeHardwareCameraStream(){
+    const constraints={video:{facingMode:'environment',width:{ideal:640}},audio:false};
+    try {
+        localCameraStream=await navigator.mediaDevices.getUserMedia(constraints);
+        const v=document.getElementById('device-camera-feed');
+        if(v) v.srcObject=localCameraStream;
+    } catch(e){
+        const feed=document.getElementById('device-camera-feed');
+        if(feed) feed.parentElement.innerHTML=`<div class="absolute inset-0 flex flex-col items-center justify-center text-xs text-slate-500 p-4 text-center bg-black"><i class="fa-solid fa-video-slash text-xl mb-2 text-rose-500"></i>Camera offline. Manual override.</div>`;
+    }
+}
+function stopActiveCameraStream(){
+    if(localCameraStream){ localCameraStream.getTracks().forEach(t=>t.stop()); localCameraStream=null; }
+}
+function executeHardwareCaptureSnapshot(){
+    const v=document.getElementById('device-camera-feed');
+    const db=getTasksDB(); const topic=db[activeTopic];
+    const task=getLiveStep();
+    if(!task) return;
+    if(!v||!localCameraStream){
+        if(task.items.length<task.target){
+            task.items.push('https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=100');
+            playSoundFX('coin'); spawnStarBurst(window.innerWidth/2,window.innerHeight/2);
+            triggerCharacterReaction('happy',topic.successPhrases[Math.floor(Math.random()*topic.successPhrases.length)]);
+            renderActiveTask();
+        }
+        return;
+    }
+    const c=document.createElement('canvas'); c.width=v.videoWidth||640; c.height=v.videoHeight||480;
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+    if(task.items.length<task.target){
+        task.items.push(c.toDataURL('image/jpeg',0.7));
+        playSoundFX('coin'); spawnStarBurst(window.innerWidth/2,200);
+        triggerCharacterReaction('happy',`Photo ${task.items.length}/${task.target} logged!`);
+        renderActiveTask();
+    }
+}
+
+// ==================== QUIZ ====================
+function registerQuizSelection(idx){
+    const db=getTasksDB(); const topic=db[activeTopic];
+    const task=getLiveStep(); task.selected=idx;
+    if(idx===task.correct){
+        playSoundFX('success'); spawnConfetti(30); spawnStarBurst(window.innerWidth/2,window.innerHeight/3);
+        triggerCharacterReaction('happy',topic.successPhrases[Math.floor(Math.random()*topic.successPhrases.length)]);
+    } else {
+        playSoundFX('error'); shakeElement('game-content-area');
+        triggerCharacterReaction('sad',topic.failPhrases[Math.floor(Math.random()*topic.failPhrases.length)]);
+    }
+    renderActiveTask();
+}
+
+// ==================== HAZARD BLUEPRINT ====================
+function revealHazardExplanation(id, textContent, hex){
+    const task=getLiveStep();
+    if(!task.found.includes(id)){ task.found.push(id); playSoundFX('pop'); }
+    document.getElementById('explanation-modal-text').innerText=textContent;
+    document.getElementById('explanation-modal').classList.remove('hidden');
+    triggerCharacterReaction('sad',currentLang==='ms'?'Bahaya ditemui! Baca laporan bahaya.':'Hazard spotted! Read the danger report.');
+}
+function closeExplanationModal(){
+    document.getElementById('explanation-modal').classList.add('hidden');
+    const task=getLiveStep();
+    if(task.found.length===task.max){ playSoundFX('complete'); spawnConfetti(40); triggerCharacterReaction('happy',currentLang==='ms'?'Semua bahaya ditemui!':'All hazards found!'); }
+    renderActiveTask();
+}
+
+// ==================== REACTION ====================
+let reactionTimeout;
+function initializeReactionGame(){
+    const task=getLiveStep(); task.state='waiting'; renderActiveTask(); playSoundFX('tick');
+    reactionTimeout=setTimeout(()=>{
+        if(task.state!=='waiting') return;
+        task.state='flash'; reactionTimeStartMarker=Date.now(); playSoundFX('error'); renderActiveTask();
+    }, 2000+Math.random()*3000);
+}
+function faultEarlyReaction(){
+    clearTimeout(reactionTimeout);
+    const db=getTasksDB(); const task=getLiveStep(); task.state='idle';
+    triggerCharacterReaction('sad',db[activeTopic].failPhrases[0]); playSoundFX('fail'); shakeElement('game-content-area');
+    renderActiveTask();
+}
+function registerReactionTap(){
+    clearTimeout(reactionTimeout);
+    const db=getTasksDB(); const task=getLiveStep(); task.state='done';
+    task.bestTime=((Date.now()-reactionTimeStartMarker)/1000).toFixed(3);
+    playSoundFX('success'); spawnStarBurst(window.innerWidth/2,window.innerHeight/3);
+    triggerCharacterReaction('happy',`⚡ ${task.bestTime}s — ${currentLang==='ms'?'Refleks luar biasa!':'Lightning reflexes!'}`);
+    renderActiveTask();
+}
+
+// ==================== CARDIO TIMER ====================
+function toggleCardioTimer(){
+    const task=getLiveStep();
+    if(task.running){ clearInterval(clockTimerInterval); task.running=false; }
+    else {
+        task.running=true;
+        clockTimerInterval=setInterval(()=>{
+            if(task.timeLeft>0){ task.timeLeft--; playSoundFX('tick'); renderActiveTask(); }
+            else {
+                clearInterval(clockTimerInterval); task.running=false;
+                playSoundFX('fanfare'); spawnConfetti(50);
+                triggerCharacterReaction('happy',currentLang==='ms'?'Latihan kardio selesai! Luar biasa!':'Cardio complete! Outstanding!');
+                renderActiveTask();
+            }
+        },1000);
+    }
+    renderActiveTask();
+}
+
+// ==================== RHYTHM ====================
+function registerRhythmCompressionBeat(){
+    const db=getTasksDB(); const task=getLiveStep();
+    if(task.count<task.target){
+        task.count++; playSoundFX('tick');
+        if(task.count%5===0) playSoundFX('success');
+        if(task.count===task.target){ playSoundFX('fanfare'); spawnConfetti(60); triggerCharacterReaction('happy',currentLang==='ms'?'Irama CPR sempurna!':'Perfect CPR rhythm!'); }
+        renderActiveTask();
+    }
+}
+
+// ==================== NAVIGATION STEPS ====================
+function prevTask(){
+    if(activeStep>1){ activeStep--; playSoundFX('whoosh'); const db=getTasksDB(); triggerCharacterReaction('neutral',db[activeTopic].dialogue[activeStep-1]); renderActiveTask(); }
+}
+
+function nextTask(){
+    const db=getTasksDB(); const topic=db[activeTopic];
+    if(activeStep<totalSteps){
+        activeStep++; playSoundFX('levelup');
+        triggerCharacterReaction('neutral',topic.dialogue[activeStep-1]);
+        renderActiveTask();
+    } else {
+        // Topic complete!
+        completedTopics[activeTopic]=true;
+        playSoundFX('fanfare'); spawnConfetti(80);
+        updateOverallProgress();
+
+        const allDone=Object.keys(completedTopics).length===4;
+        if(allDone){
+            showVictoryScreen();
+        } else {
+            document.getElementById('topic-complete-toast').classList.remove('hidden');
+            triggerCharacterReaction('happy',currentLang==='ms'?'Topik selesai! Pilih topik lain sekarang!':'Topic done! Pick another topic now!');
+            updateTabDoneMarkers();
+        }
+    }
+}
+
+function updateTabDoneMarkers(){
+    const map={recycling:'tab1','safety-driving':'tab2','slip-trip-fall':'tab3','heart-health':'tab4'};
+    Object.keys(completedTopics).forEach(t=>{
+        const el=document.getElementById(map[t]+'-done');
+        if(el) el.classList.remove('hidden');
+    });
+}
+
+function closeTopicToast(){
+    document.getElementById('topic-complete-toast').classList.add('hidden');
+    playSoundFX('pop');
+    // Reset to idle state
+    activeTopic=null;
+    document.getElementById('current-topic-title').innerText=currentLang==='ms'?'PILIH TOPIK DI ATAS':'SELECT A TOPIC ABOVE';
+    document.getElementById('current-topic-title').style.color='#94a3b8';
+    document.getElementById('next-btn').classList.add('hidden');
+    document.getElementById('prev-btn').style.display='none';
+    document.getElementById('game-content-area').innerHTML=`<div class="text-center text-slate-600 py-16"><i class="fa-solid fa-hand-pointer text-4xl mb-4 animate-bounce"></i><p id="select-topic-hint" class="text-sm font-semibold">${T[currentLang].selectHint}</p></div>`;
+    for(let i=1;i<=3;i++) document.getElementById(`dot-${i}`).style.backgroundColor='#334155';
+    // reset tab highlight
+    document.querySelectorAll('.topic-tab').forEach(tab=>{
+        tab.className='topic-tab p-4 bg-slate-900 rounded-2xl text-center shadow-lg border border-slate-700 transition hover:scale-105 btn-ripple';
+    });
+}
+
+function showVictoryScreen(){
+    stopGlobalTimer();
+    const time=document.getElementById('global-speedrun-clock').innerText;
+    const isMS=currentLang==='ms';
+    document.getElementById('game-content-area').innerHTML=`
+        <div class="text-center max-w-sm mx-auto w-full space-y-5 bg-black/40 border border-slate-800 p-6 rounded-2xl slide-in-up">
+            <div class="text-6xl animate-bounce">🏆</div>
+            <div>
+                <h3 class="text-2xl font-black shimmer-text tracking-tight uppercase">${isMS?'SELESAI! SEMUA TOPIK!':'ALL TOPICS COMPLETE!'}</h3>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">${isMS?'Anda telah menyelesaikan semua cabaran kesedaran dengan berjaya!':'You have completed all awareness challenges successfully!'}</p>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
+                <div class="flex items-center justify-between border-b border-slate-900 pb-2 text-xs">
+                    <span class="text-slate-500 font-mono">${isMS?'PANGKAT':'RANK'}</span>
+                    <span class="text-emerald-400 font-black font-mono">${isMS?'PEJUANG KESELAMATAN':'SAFETY CHAMPION'}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <span class="text-slate-400 font-medium">${isMS?'JUMLAH MASA:':'TOTAL TIME:'}</span>
+                    <span class="text-red-500 font-mono font-black text-sm tracking-tight timer-glow">${time}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <span class="text-slate-400">${isMS?'TOPIK SELESAI:':'TOPICS DONE:'}</span>
+                    <span class="text-emerald-400 font-black">4 / 4 ✓</span>
+                </div>
+            </div>
+            <button onclick="navigateToWelcomeScreen()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-slate-950 font-black py-3 rounded-xl tracking-wider text-sm shadow-md transition transform active:scale-95 btn-ripple">
+                ${isMS?'KEMBALI KE PORTAL':'RETURN TO PORTAL'} 🚀
+            </button>
+        </div>`;
+    document.getElementById('next-btn').classList.add('hidden');
+    document.getElementById('prev-btn').style.display='none';
+    for(let i=1;i<=3;i++){ const d=document.getElementById(`dot-${i}`); d.style.backgroundColor='#10b981'; d.style.transform='scale(1.4)'; }
+}
+
+// ==================== CHARACTER ====================
+function triggerCharacterReaction(emotion, text){
+    const sprite=document.getElementById('character-sprite');
+    const cloud=document.getElementById('character-dialogue-cloud');
+    sprite.className='w-16 h-16 rounded-full bg-gradient-to-tr flex items-center justify-center border-2 border-slate-700 shadow-xl flex-shrink-0 relative transition-all duration-300';
+    cloud.innerText=text;
+    if(emotion==='happy'){
+        sprite.classList.add('from-emerald-500','to-teal-400','character-cheering');
+        playSoundFX('success');
+    } else if(emotion==='sad'){
+        sprite.classList.add('from-rose-600','to-red-500','character-dizzy');
+        playSoundFX('fail');
+    } else {
+        sprite.classList.add('from-amber-500','to-orange-400','character-talking');
+    }
+    setTimeout(()=>sprite.classList.remove('character-cheering','character-dizzy','character-talking'),1200);
+}
+
+// ==================== AUDIO TOGGLE ====================
+let bgAudioCtx = null, bgGain = null, bgPlaying = false;
+function toggleBackgroundAudio(){
+    const ico=document.getElementById('audio-icon');
+    const btn=document.getElementById('audio-toggle-btn');
+    if(!bgAudioCtx){
+        try {
+            bgAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+            bgGain=bgAudioCtx.createGain(); bgGain.gain.value=0.04; bgGain.connect(bgAudioCtx.destination);
+        } catch(e){ return; }
+    }
+    if(!bgPlaying){
+        // Synthesized ambient drone using oscillators
+        const osc1=bgAudioCtx.createOscillator(); osc1.type='sine'; osc1.frequency.value=60;
+        const osc2=bgAudioCtx.createOscillator(); osc2.type='triangle'; osc2.frequency.value=90;
+        const osc3=bgAudioCtx.createOscillator(); osc3.type='sine'; osc3.frequency.value=120;
+        [osc1,osc2,osc3].forEach(o=>{ o.connect(bgGain); o.start(); });
+        window._bgOscs=[osc1,osc2,osc3];
+        bgPlaying=true;
+        ico.className='fa-solid fa-volume-high text-lg';
+        btn.className='bg-emerald-600 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center border border-emerald-400 transform active:scale-95 animate-pulse btn-ripple';
+    } else {
+        window._bgOscs&&window._bgOscs.forEach(o=>{ try{o.stop();}catch(e){} });
+        bgPlaying=false;
+        ico.className='fa-solid fa-volume-xmark text-lg';
+        btn.className='bg-indigo-600 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center border border-indigo-400 transform active:scale-95 btn-ripple';
+    }
+}
+</script>
+</body>
+</html>
